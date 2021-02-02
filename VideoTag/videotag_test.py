@@ -27,7 +27,10 @@ from reader import get_reader
 from metrics import get_metrics
 from utils.utility import check_cuda
 from utils.utility import check_version
+import paddle
 
+
+paddle.enable_static()
 logging.root.handlers = []
 FORMAT = '[%(levelname)s: %(filename)s: %(lineno)4d]: %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)

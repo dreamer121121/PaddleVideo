@@ -58,6 +58,9 @@ class TSN(ModelBase):
         image_shape[0] = image_shape[0] * self.seglen
         image_shape = [None, self.seg_num] + image_shape
         self.use_dataloader = use_dataloader
+        
+        #import paddle
+        #paddle.enable_static()
 
         image = fluid.data(name='image', shape=image_shape, dtype='float32')
         if self.mode != 'infer':
