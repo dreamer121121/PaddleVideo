@@ -1,19 +1,26 @@
 [简体中文](../../zh-CN/dataset/k400.md) | English
 # AVA Data Preparation
 This document mainly introduces the preparation process of AVA dataset. 
-It mainly includes three parts: Data Download, Extract the frames of the video file, Generate the path list for the frames and video files.
+It mainly includes three parts: Video Data Download, Prepare Annotations, Cut video files, 
+Extract the RGB frames, Pulling Proposal Files,et al.
 Before we start, please make sure that the directory is located at `$PaddleVideo/data/ava/shell`.
 
 
 ---
 
-## 1. Data Download
+## 1. Video data Download
 For basic dataset information, you can refer to the official website[AVA](https://research.google.com/ava/index.html).
 For the dataset download, you can refer to the [AVA Download](https://github.com/cvdfoundation/ava-dataset) ，
-which introduce the way to download the dataset. Furthermore,considering the difficulty in downloading, 
+which introduce the way to download the dataset. We also provide the shell script for downloading the video files
+
+```shell
+bash download_videos.sh
+```
+
+Furthermore,considering the difficulty in downloading, 
 we upload the video files to Baidu cloud disk in the form of zip packages, and users can download it by themselves according to their needs.
 The total dataset needs about storage space. [Link]() <sup>coming soon</sup>.
-**Note:** the video files should be placed in data/ava/videos
+**Note:** the video files should be placed in `data/ava/videos`
 
 ---
 
