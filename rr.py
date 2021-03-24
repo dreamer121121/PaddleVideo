@@ -1,5 +1,7 @@
 import paddle
 import paddle.nn as nn
+
+
 class h_sigmoid(nn.Layer):
     def __init__(self, inplace=True):
         super(h_sigmoid, self).__init__()
@@ -27,8 +29,8 @@ class CoordAtt(nn.Layer):
 
         mip = max(8, inp // reduction)
 
-        self.conv1 = nn.Conv2D(inp, mip, kernel_size=1, stride=1, padding=0)  # 减少通道数量
-        self.bn1 = nn.BatchNorm2D(mip)
+        self.conv1 = nn.Conv3D(inp, mip, kernel_size=1, stride=1, padding=0)  # 减少通道数量
+        self.bn1 = nn.BatchNorm3D(mip)
         self.act = h_swish()
 
         self.conv_h = nn.Conv3D(mip, oup, kernel_size=1, stride=1, padding=0)
@@ -38,7 +40,7 @@ class CoordAtt(nn.Layer):
     def forward(self, x):
         identity = x
 
-        n, c, t, h, w = x.shape
+        n, c, t, h, w = x.size()
         x_t = self.pool_t(x)
         x_h = self.pool_h(x)
         x_w = self.pool_w(x).permute(0, 1, 3, 2)  # 变换Tensor的维度
@@ -46,12 +48,12 @@ class CoordAtt(nn.Layer):
         import sys
         sys.exit(0)
 
-        y = paddle.concat([x_t, x_h, x_w], axis=2)
+        y = paddle.cat([x_t, x_h, x_w], dim=2)
         y = self.conv1(y)
         y = self.bn1(y)
         y = self.act(y)
 
-        x_h, x_w = paddle.split(y, [t,h, w], dim=2)
+        x_h, x_w = paddle.split(y, [t,h,w], axis=2)
         x_w = x_w.permute(0, 1, 3, 2)
 
         a_h = self.conv_h(x_h).sigmoid()
