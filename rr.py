@@ -23,9 +23,9 @@ class h_swish(nn.Layer):
 class CoordAtt(nn.Layer):
     def __init__(self, inp, oup, reduction=32):
         super(CoordAtt, self).__init__()
-        self.pool_t = nn.AdaptiveAvgPool3D((1, None, None))
-        self.pool_h = nn.AdaptiveAvgPool3D((None, 1, None))
-        self.pool_w = nn.AdaptiveAvgPool3D((None, None, 1))
+        self.pool_t = nn.AdaptiveAvgPool3D((None, 1, 1))
+        self.pool_h = nn.AdaptiveAvgPool3D((1, None, 1))
+        self.pool_w = nn.AdaptiveAvgPool3D((1, 1, None))
 
         mip = max(8, inp // reduction)
 
@@ -36,34 +36,44 @@ class CoordAtt(nn.Layer):
         self.conv_h = nn.Conv3D(mip, oup, kernel_size=1, stride=1, padding=0)
         self.conv_w = nn.Conv3D(mip, oup, kernel_size=1, stride=1, padding=0)
         self.conv_t = nn.Conv3D(mip, oup, kernel_size=1, stride=1, padding=0)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         identity = x
 
-        n, c, t, h, w = x.size()
+        n, c, t, h, w = x.shape
         x_t = self.pool_t(x)
-        x_h = self.pool_h(x)
-        x_w = self.pool_w(x).permute(0, 1, 3, 2)  # 变换Tensor的维度
-        print(x_t,x_h,x_w)
-        import sys
-        sys.exit(0)
+        x_h = self.pool_h(x).transpose((0,1,3,2,4))
+        x_w = self.pool_w(x).transpose((0,1,4,2,3))  # 变换Tensor的维度
+        #print(x_t.shape,x_h.shape,x_w.shape)
+        #import sys
+        #sys.exit(0)
 
-        y = paddle.cat([x_t, x_h, x_w], dim=2)
+        y = paddle.concat([x_t, x_h, x_w], axis=2)
+        #print(y.shape)
+        #import sys
+        #sys.exit(0)
+        print(y)
         y = self.conv1(y)
         y = self.bn1(y)
         y = self.act(y)
 
-        x_h, x_w = paddle.split(y, [t,h,w], axis=2)
-        x_w = x_w.permute(0, 1, 3, 2)
+        x_t,x_h, x_w = paddle.split(y, [t,h,w], axis=2)
+        x_h = x_h.transpose((0,1,3,2,4))
+        x_w = x_w.transpose((0,1,4,2,3))
 
-        a_h = self.conv_h(x_h).sigmoid()
-        a_w = self.conv_w(x_w).sigmoid()
+        a_t = self.sigmoid(self.conv_t(x_t))
+        a_h = self.sigmoid(self.conv_h(x_h))
+        a_w = self.sigmoid(self.conv_w(x_w))
 
-        out = identity * a_w * a_h
-
+        out = identity * a_w * a_h * a_t
         return out
 
 if __name__ == "__main__":
+    import numpy as np
     ca = CoordAtt(64, 64)
-    input = paddle.randn((1, 64, 8, 112, 112))
+    input = np.random.randn(1, 64, 8, 112, 112)
+    input = paddle.to_tensor(input,dtype='float32')
+    #print(type(input))
     out = ca(input)
+    print(out.shape)
